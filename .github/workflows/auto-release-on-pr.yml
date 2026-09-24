@@ -1,0 +1,28 @@
+name: Auto Release on PR Merge
+
+on:
+  pull_request:
+    types: [closed]              # PR 关闭时触发（合并也算关闭）
+    branches: [main]
+
+jobs:
+  create-tag:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'auto-release') &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}                   # 用你的令牌，不用默认的
+          ref: ${{ github.event.pull_request.merge_commit_sha }} # 切到合并产生的那个 commit
+      - env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          VERSION="${BRANCH_NAME#release/}"          # release/v0.2.0 → v0.2.0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" "$MERGE_COMMIT_SHA" -m "Release $VERSION"
+          git push origin "$VERSION"                 # checkout 已保存令牌，这里直接能推
