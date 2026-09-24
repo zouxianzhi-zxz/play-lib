@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']                 # 推送 v 开头的 tag 时触发，比如 v0.1.0
+
+jobs:
+  build:                         # job 1：打包
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir dist
+          zip dist/play-lib-${{ github.ref_name }}.zip calc.py   # ref_name = tag 名，比如 v0.1.0
+      - uses: actions/upload-artifact@v4       # 把 dist/ 暂存到 GitHub
+        with:
+          name: dist
+          path: dist/
+
+  release:                       # job 2：发布
+    needs: build                 # build 成功后才运行
+    runs-on: ubuntu-latest       # 注意：这是另一台全新的机器
+    permissions:
+      contents: write            # 自动令牌默认只读，创建 Release 需要写权限
+    steps:
+      - uses: actions/download-artifact@v4     # 把 job 1 暂存的 dist/ 取回来
+        with:
+          name: dist
+          path: dist
+      - env:
+          GH_TOKEN: ${{ github.token }}        # gh 命令从这个变量读取令牌
+          TAG: ${{ github.ref_name }}
+        run: |
+          # 已有同名 Release（网页上建的）就上传附件，否则新建 Release
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* -R "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --generate-notes
+          fi
