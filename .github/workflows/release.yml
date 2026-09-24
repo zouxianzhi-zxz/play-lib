@@ -37,3 +37,10 @@ jobs:
           else
             gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --generate-notes
           fi
+      - name: 通知 play-app
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}           # 默认令牌没有权限访问别的仓库
+          repository: zouxianzhi-zxz/play-app          # 发给谁
+          event-type: lib-released                     # 消息名，要和 app 那边一致
+          client-payload: '{"lib_version": "${{ github.ref_name }}"}'   # 附带的数据
