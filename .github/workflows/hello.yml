@@ -1,0 +1,31 @@
+name: Hello                      # Actions 页左侧显示的名字
+
+on:
+  workflow_dispatch:             # 触发方式：网页上手动点按钮
+    inputs:
+      who:                       # 点按钮时会弹出一个输入框
+        description: "要打招呼的人"
+        default: "zxz"
+
+jobs:
+  hello:                         # job 名，随便起
+    runs-on: ubuntu-latest       # GitHub 借你一台全新的 Linux 机器
+
+    steps:
+      - name: 打个招呼
+        run: echo "你好，${{ inputs.who }}！我在 GitHub 的机器上跑起来了"
+
+      - name: 看看这台机器是啥
+        run: |
+          uname -a
+          date
+          whoami
+          pwd
+          ls -la
+
+      - name: 看看这次运行的上下文
+        run: |
+          echo "仓库：${{ github.repository }}"
+          echo "谁点的按钮：${{ github.actor }}"
+          echo "触发事件：${{ github.event_name }}"
+          echo "当前 commit：${{ github.sha }}"
