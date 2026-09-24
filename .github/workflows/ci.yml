@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  pull_request:              # 有人开 PR 或往 PR 推新 commit 时触发
+    branches: [main]         # 只管合进 main 的 PR
+
+jobs:
+  test:                      # 这个名字在关卡 3 会用到
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # 把代码拉到机器上（关卡 1 看过：不拉就是空的）
+
+      - uses: actions/setup-python@v5      # 安装指定版本的 Python
+        with:
+          python-version: "3.12"
+
+      - run: pip install pytest            # 安装测试工具
+
+      - run: pytest -v                     # 跑测试：全部通过退出码 0 → ✅，否则 → ❌
